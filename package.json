@@ -17,7 +17,10 @@
     "webpack",
     "pwa"
   ],
-  "author": "Alan Semenov",
+  "author": [
+    "Alan Semenov",
+    "Christian Westgaard <cwe@enonic.com>"
+  ],
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/enonic/starter-pwa/issues"
