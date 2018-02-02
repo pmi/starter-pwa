@@ -9,7 +9,8 @@
   "scripts": {
     "build": "gradle build",
     "deploy": "gradle deploy",
-    "watch": "gradle deploy -t"
+    "watch": "gradle deploy -t",
+    "webpack": "node_modules/webpack/bin/webpack.js --color"
   },
   "keywords": [
     "enonic",
@@ -33,8 +34,10 @@
     "babel-plugin-transform-object-assign": "^6.22.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.1",
+    "babel-preset-es2015": "^6.24.1",
     "css-loader": "^0.26.1",
     "extract-text-webpack-plugin": "^3.0.0",
+    "glob": "^7.1.2",
     "less": "^2.7.2",
     "less-loader": "^2.2.3",
     "style-loader": "^0.13.1",
