@@ -1,4 +1,4 @@
-const path = require('path');
+import path from 'path';
 const extractTextPlugin = require('extract-text-webpack-plugin');
 const workboxPlugin = require('workbox-webpack-plugin');
 

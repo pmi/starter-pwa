@@ -1,0 +1,11 @@
+{
+    "compact": false,
+    "comments": false,
+    "minified": false,
+    "plugins": [
+        "array-includes",
+        "transform-object-assign",
+        "transform-object-rest-spread"
+    ],
+    "presets": ["env"]
+}
