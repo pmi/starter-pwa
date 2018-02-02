@@ -26,15 +26,26 @@ module.exports = {
     },
 
     module: {
-        rules: [
-            {
-                test: /.less$/,
-                loader: extractTextPlugin.extract({
-                    fallback: 'style-loader',
-                    use: "css-loader!less-loader"
-                })
-            }
-        ]
+        rules: [{
+          test: /.js$/,
+          use: [{
+              loader: 'babel-loader',
+              options: {
+                  babelrc: false, // The .babelrc file should only be used to transpile config files.
+                  comments: false,
+                  compact: false,
+                  minified: false,
+                  plugins: [],
+                  presets: ['env']
+              }
+            }]
+        }, {
+            test: /.less$/,
+            loader: extractTextPlugin.extract({
+                fallback: 'style-loader',
+                use: "css-loader!less-loader"
+            })
+        }]
     },
     plugins: [
         new extractTextPlugin('precache/bundle.css'),

@@ -1,6 +1,6 @@
 require('../css/styles.less');
 
-(function(){
+(() => {
     window.onload = function() {
         const mainContainer = document.getElementById("main-container");
 
