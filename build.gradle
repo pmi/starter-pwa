@@ -41,11 +41,7 @@ task webpack(type: NodeTask) {
 webpack.dependsOn npmInstall
 webpack.dependsOn processResources
 
-//assemble.dependsOn webpack
-//assemble.mustRunAfter webpack
-
 jar.dependsOn webpack
-jar.mustRunAfter webpack
 
 
 sourceSets {
