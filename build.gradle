@@ -34,6 +34,7 @@ repositories {
 
 task webpack(type: NodeTask) {
     script = file('node_modules/webpack/bin/webpack.js')
+    args = ['--color']
 }
 
 // processes your package.json before running webpack
