@@ -1,73 +1,199 @@
+<script type="text/javascript" src="{{precacheUrl}}/js/jquery-3.3.1.min.js"></script>
 <script type="text/javascript">
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker
-        .register('{{baseUrl}}/sw.js', {scope: '{{appUrl}}'})
-        .then(function(reg) {
-            reg.onupdatefound = function() {
-                notifyAboutNewVersion();
-            };
-            console.log('Service Worker registered with scope '  + reg.scope);
-        }, function() {
-            console.log('Service Worker registration failure.');
+
+    var swRegistration;
+    var pushSubscription;
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker
+            .register('{{baseUrl}}/sw.js', {scope: '{{appUrl}}'})
+            .then(function (reg) {
+                swRegistration = reg;
+
+                reg.onupdatefound = function () {
+                    notifyAboutNewVersion();
+                };
+
+                askPermission().then(function(perm) {
+                    return subscribe(reg).then(function(push) {
+                        pushSubscription = push;
+                    });
+                });
+
+                console.log('Service Worker registered with scope ' + reg.scope);
+            }, function () {
+                console.log('Service Worker registration failure.');
+            });
+    }
+
+    function showNotification() {
+        var snackbarContainer = document.querySelector('#notification-bar');
+        var data = {message: '{{title}} upgraded to the latest version'};
+        if (snackbarContainer.MaterialSnackbar) {
+            snackbarContainer.MaterialSnackbar.showSnackbar(data);
+        }
+    }
+
+    function notifyAboutNewVersion() {
+        if (!("Notification" in window)) {
+            console.log('Notification API not supported.');
+            return;
+        }
+
+        // Let's check whether notification permissions have already been granted
+        if (Notification.permission === "granted") {
+            // If it's okay let's create a notification
+            showNotification();
+        }
+
+        // Otherwise, we need to ask the user for permission
+        else if (Notification.permission !== 'denied') {
+            Notification.requestPermission(function (permission) {
+                // If the user accepts, let's create a notification
+                if (permission === "granted") {
+                    showNotification();
+                }
+            });
+        }
+    }
+
+    let cssLoaded = 0;
+    let cssAdded = 0;
+
+    function removeInlineStyles() {
+        const styleEl = document.getElementsByTagName('style')[0];
+        styleEl.parentNode.removeChild(styleEl);
+    }
+
+    function addLinkElToHead(src) {
+        const link = document.createElement('link');
+        link.setAttribute('rel', 'stylesheet');
+        link.setAttribute('type', 'text/css');
+        link.setAttribute('href', src);
+        link.onload = function() {
+            cssLoaded++;
+            if (cssLoaded === cssAdded) {
+                removeInlineStyles();
+            }
+        };
+        document.getElementsByTagName('head')[0].appendChild(link);
+        cssAdded++;
+    }
+
+    addLinkElToHead('{{precacheUrl}}/css/material.indigo-pink.min.css');
+    addLinkElToHead('{{precacheUrl}}/bundle.css');
+    addLinkElToHead('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+
+    function registerToBroadcast() {
+        const channel = new BroadcastChannel('push-messages');
+        channel.addEventListener('message', function(event) {
+            log('Received push message: ' + JSON.stringify(event.data), 'debug');
         });
-}
-
-function showNotification() {
-    var snackbarContainer = document.querySelector('#notification-bar');
-    var data = {message: '{{title}} upgraded to the latest version'};
-    if (snackbarContainer.MaterialSnackbar) {
-        snackbarContainer.MaterialSnackbar.showSnackbar(data);
-    }
-}
-
-function notifyAboutNewVersion() {
-    if (!("Notification" in window)) {
-        console.log('Notification API not supported.');
-        return;
     }
 
-    // Let's check whether notification permissions have already been granted
-    if (Notification.permission === "granted") {
-        // If it's okay let's create a notification
-        showNotification();
+    function askPermission() {
+        return new Promise(function (resolve, reject) {
+            Notification.requestPermission(function (result) {
+                if (result !== 'granted') {
+                    reject('We were not granted permission: ' + result);
+                } else {
+                    log('Permission obtained: ' + result, 'success');
+                    resolve(result);
+                }
+            });
+        });
     }
 
-    // Otherwise, we need to ask the user for permission
-    else if (Notification.permission !== 'denied') {
-        Notification.requestPermission(function (permission) {
-            // If the user accepts, let's create a notification
-            if (permission === "granted") {
-                showNotification();
+    function unsubscribe(pushSubscription) {
+        return pushSubscription.unsubscribe().then(function (result) {
+            if (result) {
+                log('Unsubscribed from ' + JSON.stringify(pushSubscription.toJSON()), 'info');
             }
         });
     }
-}
 
-let cssLoaded = 0;
-let cssAdded = 0;
+    $('#pushButton').click(function() {
+        log('clicked the button');
+        notify($('#pushText').val());
+    })
 
-function removeInlineStyles() {
-    const styleEl = document.getElementsByTagName('style')[0];
-    styleEl.parentNode.removeChild(styleEl);
-}
-
-function addLinkElToHead(src) {
-    const link = document.createElement('link');
-    link.setAttribute('rel', 'stylesheet');
-    link.setAttribute('type', 'text/css');
-    link.setAttribute('href', src);
-    link.onload = () => {
-        cssLoaded++;
-        if (cssLoaded === cssAdded) {
-            removeInlineStyles();
-        }
+    function notify(text) {
+        return $.post(pageUrl + '/push/notify', {
+            text: text
+        }).then(function (result) {
+            if (result.status === 200) {
+                log('Posted text to server', 'debug');
+            } else {
+                throw "Error posting subscription details: " + result;
+            }
+        });
     }
-    document.getElementsByTagName('head')[0].appendChild(link);
-    cssAdded++;
-}
 
-addLinkElToHead('{{precacheUrl}}/css/material.indigo-pink.min.css');
-addLinkElToHead('{{precacheUrl}}/bundle.css');
-addLinkElToHead('https://fonts.googleapis.com/icon?family=Material+Icons');
+    function subscribe(swRegistration) {
+        return swRegistration.pushManager.getSubscription()
+            .then(function (pushSubscription) {
+                if (pushSubscription) {
+                    log('Already subscribed to ' + JSON.stringify(pushSubscription.toJSON()), 'info');
+                    return pushSubscription;
+                } else {
+                    return swRegistration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: base64ToUint8(serverPublicKey)
+                    }).then(function (pushSubscription) {
+                        log('Subscribed to ' + JSON.stringify(pushSubscription.toJSON()), 'info');
+                        return pushSubscription;
+                    });
+                }
+            })
+            .then(function (subscription) {
+                pushSubscription = subscription;
+                postBackSubscription(subscription);
+            });
+    }
+
+    function postBackSubscription(pushSubscription) {
+        return $.post(pageUrl + '/push/subscribe', {
+            endpoint: pushSubscription.endpoint,
+            auth: arrayBufferToBase64(pushSubscription.getKey('auth')),
+            receiverKey: arrayBufferToBase64(pushSubscription.getKey('p256dh'))
+        }).then(function (result) {
+            if (result.status === 200) {
+                log('Posted subscription data to server', 'debug');
+                return pushSubscription;
+            } else {
+                throw "Error posting subscription details: " + result;
+            }
+        });
+    }
+
+    function log(text, type) {
+        console.log( text );
+    }
+
+    function base64ToUint8(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    function arrayBufferToBase64(buffer) {
+        var binary = '';
+        var bytes = new Uint8Array(buffer);
+        var len = bytes.byteLength;
+        for (var i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
+    }
 
 </script>

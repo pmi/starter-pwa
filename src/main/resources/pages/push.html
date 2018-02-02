@@ -20,6 +20,12 @@
     <script type="text/javascript" src="{{precacheUrl}}/bundle.js" async></script>
     {{{styles}}}
 
+    <script type="text/javascript">
+        const pageUrl = '{{pageUrl}}';
+        const serverPublicKey = '{{publicKey}}';
+        const assetUrl = '{{precacheUrl}}';
+    </script>
+
 </head>
 
 <body>
@@ -34,8 +40,8 @@
     <div class="mdl-layout__drawer">
         <span class="mdl-layout-title">{{title}} {{version}}</span>
         <nav class="mdl-navigation">
-            <a class="mdl-navigation__link" href="{{baseUrl}}"><b>Home</b></a>
-            <a class="mdl-navigation__link" href="{{baseUrl}}/push">Push</a>
+            <a class="mdl-navigation__link" href="{{baseUrl}}">Home</a>
+            <a class="mdl-navigation__link" href="{{baseUrl}}/push"><b>Push</b></a>
             <a class="mdl-navigation__link" href="{{baseUrl}}/about">About</a>
             <a class="mdl-navigation__link" href="{{baseUrl}}/contact">Contact</a>
         </nav>
@@ -49,6 +55,9 @@
                 <p id="js-disabled">Javascript is disabled. PWA features of this application are not available.</p>
             </noscript>
             <!-- Your content goes here -->
+
+            <input type="text" id="pushText"/>
+            <input type="button" id="pushButton" value="Submit"/>
         </div>
 
     </main>
