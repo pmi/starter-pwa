@@ -38,7 +38,25 @@ task webpack(type: NodeTask) {
 }
 
 // processes your package.json before running webpack
-webpack.dependsOn 'npmInstall'
-webpack.dependsOn 'processResources'
+webpack.dependsOn npmInstall
+webpack.dependsOn processResources
+
+//assemble.dependsOn webpack
+//assemble.mustRunAfter webpack
 
 jar.dependsOn webpack
+jar.mustRunAfter webpack
+
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources { // Paths relative to srcDir
+            srcDir 'src/main/resources'
+            exclude '*.js'
+            exclude '**/*.js'
+        }
+    }
+}

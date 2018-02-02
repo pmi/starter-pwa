@@ -1,20 +1,21 @@
-var mustacheLib = require('/lib/xp/mustache');
+import {render} from '/lib/xp/mustache';
 var router = require('/lib/router')();
 var helper = require('/lib/helper');
 var swController = require('/lib/pwa/sw-controller');
 var siteTitle = 'PWA Starter';
 
+
 var renderPage = function(pageName) {
     return function() {
         return {
-            body: mustacheLib.render(resolve('pages/' + pageName), {
+            body: render(resolve('pages/' + pageName), {
                 title: siteTitle,
                 version: app.version,
                 baseUrl: helper.getBaseUrl(),
                 precacheUrl: helper.getBaseUrl() + '/precache',
                 themeColor: '#FFF',
-                styles: mustacheLib.render(resolve('/pages/styles.html')),
-                serviceWorker: mustacheLib.render(resolve('/pages/sw.html'), {
+                styles: render(resolve('/pages/styles.html')),
+                serviceWorker: render(resolve('/pages/sw.html'), {
                     title: siteTitle,
                     baseUrl: helper.getBaseUrl(),
                     precacheUrl: helper.getBaseUrl() + '/precache',
